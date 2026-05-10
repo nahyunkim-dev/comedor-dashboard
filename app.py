@@ -15,7 +15,7 @@ from sklearn.metrics import (
 )
 
 # ============================================================
-# CONFIGURACION GENERAL DEL DASHBOARD
+# CONFIGURACION GENERAL
 # ============================================================
 
 st.set_page_config(
@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# ESTILO VISUAL PROFESIONAL
+# ESTILO VISUAL
 # ============================================================
 
 st.markdown("""
@@ -34,16 +34,7 @@ st.markdown("""
     background-color: #F5F7FA;
 }
 
-h1 {
-    color: #0B3C5D;
-    font-size: 40px;
-}
-
-h2 {
-    color: #0B3C5D;
-}
-
-h3 {
+h1, h2, h3 {
     color: #0B3C5D;
 }
 
@@ -51,11 +42,11 @@ h3 {
     background-color: white;
     border: 1px solid #D9E2EC;
     padding: 15px;
-    border-radius: 12px;
+    border-radius: 10px;
 }
 
 section[data-testid="stSidebar"] {
-    background-color: #FFFFFF;
+    background-color: white;
 }
 
 </style>
@@ -68,13 +59,11 @@ section[data-testid="stSidebar"] {
 st.title("Dashboard Interactivo — Comedor Empresarial")
 
 st.write("""
-Este dashboard fue desarrollado como parte del proyecto
-de Análisis de Datos para Negocios.
+Este dashboard fue desarrollado para analizar el comportamiento
+del comedor empresarial mediante herramientas de análisis de datos.
 
-El objetivo principal es analizar el comportamiento
-del comedor empresarial para identificar patrones de consumo,
-mejorar la planeación diaria y reducir desperdicios
-mediante herramientas de analítica y visualización interactiva.
+El objetivo principal es identificar patrones de consumo,
+optimizar la planeación diaria y reducir desperdicios alimentarios.
 """)
 
 # ============================================================
@@ -94,22 +83,32 @@ df = cargar_datos()
 # PREPROCESAMIENTO
 # ============================================================
 
-# Conversion de fecha
-
 df['Fecha'] = pd.to_datetime(df['Fecha'])
 
-# Variables nuevas
+# ============================================================
+# CREACION DE VARIABLES NUEVAS
+# ============================================================
 
-df['Mes'] = df['Fecha'].dt.month
+# Diferencia entre empleados y comidas servidas
 
-df['Dia_Numero'] = df['Fecha'].dt.day
+df['Diferencia'] = (
+    df['Empleados'] - df['Comidas_Servidas']
+)
 
 # Clasificacion de demanda
 
 df['Nivel_Demanda'] = np.where(
-    df['Comidas_Servidas'] > 100,
-    "Alta",
-    "Normal"
+    df['Comidas_Servidas'] >= 110,
+    'Alta',
+    'Normal'
+)
+
+# Clasificacion operativa
+
+df['Estado_Operacion'] = np.where(
+    df['Diferencia'] > 20,
+    'Posible Sobreproduccion',
+    'Operacion Estable'
 )
 
 # ============================================================
@@ -118,15 +117,11 @@ df['Nivel_Demanda'] = np.where(
 
 st.sidebar.title("Filtros Interactivos")
 
-# Filtro de turno
-
 turno = st.sidebar.multiselect(
     "Seleccionar Turno",
     options=df['Turno'].unique(),
     default=df['Turno'].unique()
 )
-
-# Filtro de dia
 
 dia = st.sidebar.multiselect(
     "Seleccionar Día",
@@ -134,15 +129,15 @@ dia = st.sidebar.multiselect(
     default=df['Dia'].unique()
 )
 
-# Filtro de nivel de demanda
-
 demanda = st.sidebar.multiselect(
     "Nivel de Demanda",
     options=df['Nivel_Demanda'].unique(),
     default=df['Nivel_Demanda'].unique()
 )
 
-# Aplicacion de filtros
+# ============================================================
+# FILTRADO
+# ============================================================
 
 df_filtrado = df[
     (df['Turno'].isin(turno)) &
@@ -151,8 +146,7 @@ df_filtrado = df[
 ]
 
 # ============================================================
-# SECCION 1
-# INDICADORES CLAVE DEL NEGOCIO
+# KPIs PRINCIPALES
 # ============================================================
 
 st.markdown("---")
@@ -164,7 +158,7 @@ col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
 
     st.metric(
-        "Total Comidas",
+        "Total Comidas Servidas",
         int(df_filtrado['Comidas_Servidas'].sum())
     )
 
@@ -178,29 +172,28 @@ with col2:
 with col3:
 
     st.metric(
-        "Total Empleados",
-        int(df_filtrado['Empleados'].sum())
+        "Promedio Empleados",
+        round(df_filtrado['Empleados'].mean(), 2)
     )
 
 with col4:
 
     st.metric(
-        "Máximo Consumo",
-        int(df_filtrado['Comidas_Servidas'].max())
+        "Días Alta Demanda",
+        int(
+            (df_filtrado['Nivel_Demanda'] == 'Alta').sum()
+        )
     )
 
 with col5:
 
     st.metric(
-        "Días Alta Demanda",
-        int(
-            (df_filtrado['Nivel_Demanda'] == "Alta").sum()
-        )
+        "Promedio Diferencia",
+        round(df_filtrado['Diferencia'].mean(), 2)
     )
 
 # ============================================================
 # STORYTELLING
-# CONTEXTO DEL PROBLEMA
 # ============================================================
 
 st.markdown("---")
@@ -209,16 +202,14 @@ st.header("Contexto del Problema")
 
 st.write("""
 La empresa presenta diferencias entre la cantidad de alimentos
-preparados y la demanda real diaria del comedor empresarial.
+preparados y la demanda real diaria dentro del comedor empresarial.
 
-Esta situación provoca:
-- desperdicio alimentario,
-- incremento de costos,
-- problemas de planeación operativa.
+En algunos días existe sobreproducción de alimentos,
+mientras que en otros la cantidad preparada resulta insuficiente.
 
-Por ello se desarrolló un análisis de datos orientado
-a identificar patrones históricos de consumo y desarrollar
-herramientas predictivas para optimizar la toma de decisiones.
+El análisis de datos permite comprender el comportamiento
+histórico del consumo y desarrollar herramientas predictivas
+para optimizar la planeación operativa.
 """)
 
 # ============================================================
@@ -228,17 +219,16 @@ herramientas predictivas para optimizar la toma de decisiones.
 tab1, tab2, tab3 = st.tabs([
     "Análisis Operativo",
     "Análisis Predictivo",
-    "Conclusiones y Recomendaciones"
+    "Conclusiones"
 ])
 
 # ============================================================
-# TAB 1
-# ANALISIS OPERATIVO
+# TAB 1 — ANALISIS OPERATIVO
 # ============================================================
 
 with tab1:
 
-    st.subheader("Tendencia de Consumo")
+    st.subheader("Tendencia de Comidas Servidas")
 
     fig1 = px.line(
         df_filtrado,
@@ -260,23 +250,21 @@ with tab1:
     )
 
     st.write("""
-    Este gráfico permite visualizar el comportamiento
-    del consumo alimentario a lo largo del tiempo e identificar
-    variaciones operativas y días de mayor demanda.
+    Este gráfico permite visualizar cómo cambia
+    la demanda alimentaria a lo largo del tiempo.
     """)
 
     # ========================================================
 
-    st.subheader("Consumo por Día de la Semana")
+    st.subheader("Comidas Servidas por Día")
 
     fig2 = px.bar(
         df_filtrado,
         x='Dia',
         y='Comidas_Servidas',
-        color='Turno',
-        barmode='group',
+        color='Nivel_Demanda',
         template='plotly_white',
-        title='Comidas Servidas por Día'
+        title='Consumo por Día'
     )
 
     fig2.update_layout(
@@ -289,9 +277,8 @@ with tab1:
     )
 
     st.write("""
-    Esta visualización permite comparar el comportamiento
-    del consumo según el día de operación y detectar
-    periodos de mayor demanda alimentaria.
+    La visualización permite identificar
+    qué días presentan mayor demanda alimentaria.
     """)
 
     # ========================================================
@@ -302,11 +289,11 @@ with tab1:
         df_filtrado,
         x='Empleados',
         y='Comidas_Servidas',
-        color='Nivel_Demanda',
+        color='Estado_Operacion',
         size='Comidas_Servidas',
-        hover_data=['Dia', 'Turno'],
+        hover_data=['Dia'],
         template='plotly_white',
-        title='Relación entre Empleados y Comidas Servidas'
+        title='Relación entre Empleados y Consumo'
     )
 
     fig3.update_layout(
@@ -319,15 +306,39 @@ with tab1:
     )
 
     st.write("""
-    El gráfico muestra una relación positiva entre
-    la cantidad de empleados y la demanda alimentaria,
-    confirmando que la asistencia influye directamente
-    en las comidas servidas.
+    Existe una relación positiva entre el número
+    de empleados y la cantidad de comidas servidas.
+    """)
+
+    # ========================================================
+
+    st.subheader("Diferencia entre Empleados y Comidas")
+
+    fig4 = px.bar(
+        df_filtrado,
+        x='Dia',
+        y='Diferencia',
+        color='Estado_Operacion',
+        template='plotly_white',
+        title='Diferencia Operativa'
+    )
+
+    fig4.update_layout(
+        title_x=0.5
+    )
+
+    st.plotly_chart(
+        fig4,
+        use_container_width=True
+    )
+
+    st.write("""
+    Este gráfico ayuda a detectar posibles
+    problemas de sobreproducción o faltantes.
     """)
 
 # ============================================================
-# TAB 2
-# ANALISIS PREDICTIVO
+# TAB 2 — ANALISIS PREDICTIVO
 # ============================================================
 
 with tab2:
@@ -336,8 +347,8 @@ with tab2:
 
     st.write("""
     Se implementó un modelo de Regresión Lineal
-    para estimar la demanda diaria de alimentos
-    utilizando la cantidad de empleados como variable principal.
+    para estimar la cantidad de comidas servidas
+    utilizando el número de empleados como variable principal.
     """)
 
     # VARIABLES
@@ -375,7 +386,7 @@ with tab2:
 
     r2 = r2_score(y_test, y_pred)
 
-    st.subheader("Métricas del Modelo Predictivo")
+    st.subheader("Métricas del Modelo")
 
     col6, col7, col8 = st.columns(3)
 
@@ -402,7 +413,7 @@ with tab2:
 
     # ========================================================
 
-    st.subheader("Comparación Real vs Predicción")
+    st.subheader("Valores Reales vs Predicción")
 
     resultados = pd.DataFrame({
 
@@ -412,49 +423,46 @@ with tab2:
 
     })
 
-    fig4 = px.line(
+    fig5 = px.line(
         resultados,
         y=['Real', 'Predicción'],
         template='plotly_white',
-        title='Valores Reales vs Predicción'
+        title='Comparación Real vs Predicción'
     )
 
-    fig4.update_layout(
+    fig5.update_layout(
         title_x=0.5
     )
 
     st.plotly_chart(
-        fig4,
+        fig5,
         use_container_width=True
     )
 
     st.write("""
-    La comparación entre valores reales y predicciones
-    permite evaluar el desempeño del modelo y validar
-    su utilidad como herramienta de apoyo para la planeación.
+    El modelo presenta una tendencia cercana
+    a los valores reales observados.
     """)
 
 # ============================================================
-# TAB 3
-# CONCLUSIONES Y RECOMENDACIONES
+# TAB 3 — CONCLUSIONES
 # ============================================================
 
 with tab3:
 
-    st.subheader("Hallazgos Clave")
+    st.subheader("Hallazgos Principales")
 
     st.write("""
     • Existe una relación directa entre empleados
       y comidas servidas.
 
-    • El análisis permitió detectar patrones
-      operativos relevantes.
+    • La demanda alimentaria cambia según el día operativo.
 
-    • El modelo predictivo ayuda a reducir
-      incertidumbre en la planeación.
+    • Algunos días presentan diferencias importantes
+      entre empleados y comidas servidas.
 
-    • Las visualizaciones facilitan la interpretación
-      de resultados para usuarios no técnicos.
+    • El modelo predictivo ayuda a mejorar
+      la planeación alimentaria.
     """)
 
     # ========================================================
@@ -467,11 +475,11 @@ with tab3:
 
             'Actualizar diariamente el dataset',
 
-            'Implementar monitoreo continuo mediante dashboards',
+            'Monitorear indicadores operativos',
 
-            'Integrar nuevas variables al modelo predictivo',
+            'Reducir desperdicio alimentario',
 
-            'Reducir sobreproducción alimentaria',
+            'Implementar análisis predictivo continuo',
 
             'Fortalecer la toma de decisiones basada en datos'
 
@@ -485,24 +493,24 @@ with tab3:
 
     st.subheader("Indicador Operativo")
 
-    promedio = df_filtrado['Comidas_Servidas'].mean()
+    promedio = df_filtrado['Diferencia'].mean()
 
-    if promedio > 100:
+    if promedio < 15:
 
         st.success(
-            "Operación estable — Demanda controlada"
+            "Operación estable y controlada"
         )
 
-    elif promedio > 70:
+    elif promedio < 25:
 
         st.warning(
-            "Atención — Variación moderada de demanda"
+            "Atención: variación moderada"
         )
 
     else:
 
         st.error(
-            "Riesgo operativo — Posibles faltantes"
+            "Riesgo operativo: posible sobreproducción"
         )
 
     # ========================================================
@@ -510,9 +518,9 @@ with tab3:
     st.subheader("Conclusión General")
 
     st.write("""
-    El dashboard interactivo permite transformar
-    datos operativos en información visual clara,
-    facilitando el monitoreo de indicadores,
-    la identificación de patrones y el apoyo
-    a la toma de decisiones estratégicas.
+    El dashboard permite transformar datos operativos
+    en información visual clara e interactiva,
+    facilitando el monitoreo de KPIs,
+    la identificación de patrones
+    y el apoyo a la toma de decisiones estratégicas.
     """)
