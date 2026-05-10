@@ -80,7 +80,7 @@ df_filtrado = df[df['Turno'].isin(turno)]
 # KPIs
 # ============================================================
 
-st.header("📌 Indicadores Principales")
+st.header("Indicadores Principales")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -131,7 +131,7 @@ st.plotly_chart(fig1, use_container_width=True)
 
 st.markdown("---")
 
-st.header("📊 Consumo por Dia")
+st.header("Consumo por Dia")
 
 fig2 = px.bar(
     df_filtrado,
@@ -167,7 +167,7 @@ st.plotly_chart(fig3, use_container_width=True)
 
 st.markdown("---")
 
-st.header("🔥 Correlacion")
+st.header("Correlacion")
 
 corr = df_filtrado[['Empleados','Comidas_Servidas']].corr()
 
@@ -188,7 +188,7 @@ st.pyplot(fig)
 
 st.markdown("---")
 
-st.header("🤖 Modelo Predictivo")
+st.header("Modelo Predictivo")
 
 X = df_filtrado[['Empleados']]
 
@@ -234,7 +234,7 @@ with col7:
 
 st.markdown("---")
 
-st.header("📉 Comparacion Real vs Prediccion")
+st.header("Comparacion Real vs Prediccion")
 
 resultados = pd.DataFrame({
     'Real': y_test.values,
@@ -255,7 +255,7 @@ st.plotly_chart(fig4, use_container_width=True)
 
 st.markdown("---")
 
-st.header("✅ Conclusiones")
+st.header("Conclusiones")
 
 st.write("""
 • Existe relacion entre empleados y comidas servidas.
