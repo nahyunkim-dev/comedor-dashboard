@@ -1,4 +1,4 @@
-```python
+
 # ============================================================
 # DASHBOARD INTERACTIVO
 # ANALISIS DE DATOS PARA NEGOCIOS
